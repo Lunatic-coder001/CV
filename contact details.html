@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Contact Details</title>
+</head>
+<body>
+    <h1>Contact me </h1>
+    <table cellspacing="20">
+        <tr>
+            <td>Address: </td>
+            <td>Mahadu Malji dashwant chawl tuling road Shanti Nagar Kajupada Nallasopara (E) Thane-401209</td>
+        </tr>
+        <tr>
+            <td>Contact Details:</td>
+            <td>9325936066</td>
+        </tr>
+        <tr>
+            <td>Email:</td>
+            <td>mangalg609@gmail.com</td>
+        </tr>
+    </table>
+    <form class="" action="mailto:mangalg609@gmail.com" method="post" enctype="text/plain">
+        <label>Your Name:</label>
+        <input type="text" name="Yourname"><br>
+        <label>Username :</label>
+        <input type="text" value=""><br>
+        <label>Your Email:</label>
+        <input type="text" name="YourEmail"><br>
+        <label>Upload Photo:</label>
+        <input type="file" value=""><br>
+        <label>Gender</label><br>
+        <input type="radio">
+        <label>Male</label><br>
+        <input type="radio">
+        <label>FeMale</label><br>
+        <label>Date of Birth</label>
+        <input type="date"><br>
+        <label>Password :</label>
+        <input type="password"><br>
+        <label>Your Message</label>
+        <textarea name="textarea" rows="10" column="30"></textarea><br>
+        <input type="checkbox">
+        <label>I have read and undertand all the terms and conditions</label><br>
+        
+        <input type="submit">
+    </form>
+    
+</body>
+</html>
+<!--
+ form is created with action att (when the user clicks submit it directs to the page entered at action)
+ and post attribute transfers all the information entered by the user to the email client 
+ if mailto: used as action att) and all the date get decoded if enctype="plain/text" is used
+and the name="Yourname" will be dislayed as Yourname=mangal
+name is going to identify the data that is in the inputs
+-->
