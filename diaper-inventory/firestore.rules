@@ -1,0 +1,71 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function owner(uid) { return request.auth != null && request.auth.uid == uid; }
+    function whole(n, max) { return n is int && n >= 0 && n <= max; }
+    function text(s, max) { return s is string && s.size() <= max; }
+    function day(s) { return s is string && s.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$'); }
+    match /owners/{uid}/products/{id} {
+      allow read: if owner(uid);
+      function valid(p) {
+        return p.keys().hasOnly(['id','name','brand','category','type','size','packSize','qty','valuePaise','lowAt','photoPath','lastEventId'])
+          && p.id == id && text(p.name,60) && p.name.size() > 0 && text(p.brand,40) && p.brand.size() > 0
+          && p.category in ['Baby / Child','Women','Adult'] && p.type in ['Diapers','Wipes','Sanitary pads']
+          && p.size in ['S','M','L','XL','Not sized'] && whole(p.packSize,10000) && p.packSize > 0
+          && whole(p.qty,1000000) && whole(p.valuePaise,1000000000) && whole(p.lowAt,1000000)
+          && (p.qty > 0 || p.valuePaise == 0)
+          && p.photoPath == 'owners/' + uid + '/products/' + id + '.jpg' && text(p.lastEventId,100);
+      }
+      function linked(p) {
+        let e = getAfter(/databases/$(database)/documents/owners/$(uid)/events/$(p.lastEventId)).data;
+        return !exists(/databases/$(database)/documents/owners/$(uid)/events/$(p.lastEventId))
+          && e.productId == id && e.afterQty == p.qty && e.afterValue == p.valuePaise;
+      }
+      allow create: if owner(uid) && valid(request.resource.data) && linked(request.resource.data)
+        && getAfter(/databases/$(database)/documents/owners/$(uid)/events/$(request.resource.data.lastEventId)).data.kind == 'opening';
+      allow update: if owner(uid) && valid(request.resource.data) && linked(request.resource.data)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['qty','valuePaise','lastEventId']);
+      allow delete: if false;
+    }
+    match /owners/{uid}/events/{id} {
+      allow read: if owner(uid);
+      function valid(e) {
+        return e.keys().hasOnly(['productId','kind','label','qty','amountPaise','costPaise','beforeQty','beforeValue','afterQty','afterValue','dateKey','note','occurredAt'])
+          && text(e.productId,100) && text(e.label,150) && e.kind in ['opening','restock','sale']
+          && whole(e.qty,1000000) && whole(e.amountPaise,1000000000) && whole(e.costPaise,1000000000)
+          && whole(e.beforeQty,1000000) && whole(e.afterQty,1000000) && whole(e.beforeValue,1000000000) && whole(e.afterValue,1000000000)
+          && day(e.dateKey) && text(e.note,200) && e.occurredAt == request.time;
+      }
+      function matchesProduct(e) {
+        let p = getAfter(/databases/$(database)/documents/owners/$(uid)/products/$(e.productId)).data;
+        return p.lastEventId == id && p.qty == e.afterQty && p.valuePaise == e.afterValue
+          && e.label == p.brand + ' · ' + p.name + ' · ' + p.size;
+      }
+      function opening(e) {
+        return e.kind == 'opening' && !exists(/databases/$(database)/documents/owners/$(uid)/products/$(e.productId))
+          && e.beforeQty == 0 && e.beforeValue == 0 && e.afterQty == e.qty && e.afterValue == e.amountPaise
+          && e.costPaise == e.amountPaise;
+      }
+      function change(e) {
+        let p = get(/databases/$(database)/documents/owners/$(uid)/products/$(e.productId)).data;
+        return e.beforeQty == p.qty && e.beforeValue == p.valuePaise && e.qty > 0
+          && ((e.kind == 'restock' && e.afterQty == p.qty + e.qty && e.afterValue == p.valuePaise + e.amountPaise && e.costPaise == e.amountPaise)
+          || (e.kind == 'sale' && p.qty > 0 && e.qty <= p.qty && e.afterQty == p.qty - e.qty
+          && e.costPaise == math.round(p.valuePaise * e.qty / p.qty) && e.afterValue == p.valuePaise - e.costPaise));
+      }
+      allow create: if owner(uid) && valid(request.resource.data) && matchesProduct(request.resource.data)
+        && (opening(request.resource.data) || change(request.resource.data));
+      allow update, delete: if false;
+    }
+    match /owners/{uid}/expenses/{id} {
+      allow read: if owner(uid);
+      allow create: if owner(uid)
+        && request.resource.data.keys().hasOnly(['category','amountPaise','dateKey','note','occurredAt'])
+        && request.resource.data.category in ['Market rent','Transport','Tea & snacks','Other']
+        && whole(request.resource.data.amountPaise,1000000000) && request.resource.data.amountPaise > 0
+        && day(request.resource.data.dateKey) && text(request.resource.data.note,200)
+        && request.resource.data.occurredAt == request.time;
+      allow update, delete: if false;
+    }
+  }
+}

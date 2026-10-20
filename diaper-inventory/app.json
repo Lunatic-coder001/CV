@@ -1,0 +1,38 @@
+{
+  "expo": {
+    "name": "Little Stock",
+    "slug": "little-stock",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.littlestock.inventory"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#E6F4FE",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false,
+      "package": "com.littlestock.inventory"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "scheme": "littlestock",
+    "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Choose product photos for your inventory.",
+          "cameraPermission": "Take product photos for your inventory.",
+          "microphonePermission": false
+        }
+      ]
+    ]
+  }
+}
